@@ -1,0 +1,27 @@
+# docker-compose.yml (for development with SQLite3)
+
+# version: '3.8' # この行は省略可能（警告をなくすため）
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        RUBY_VERSION: 3.2.2 # DockerfileのARG RUBY_VERSIONと同じ値
+    ports:
+      - "3000:3000" # ホストの3000番ポートをコンテナの3000番ポートにマッピング
+    volumes:
+      - .:/rails # ホストのコードをコンテナにマウント (コード変更を即時反映)
+      - bundle_cache:/usr/local/bundle # Gemのキャッシュ用ボリューム (bundle install高速化)
+      - sqlite_data:/rails/db # SQLite3のDBファイルを永続化するボリューム
+    environment:
+      RAILS_ENV: development # 環境変数をdevelopmentに設定
+      DATABASE_URL: sqlite3:///rails/db/development.sqlite3 # コンテナ内のデータベースファイルのパス
+      # RAILS_MASTER_KEY: <ここにconfig/master.keyの内容をペースト> # 必要であれば設定
+    command: bash -c "rm -f tmp/pids/server.pid && ./bin/thrust ./bin/rails server -b 0.0.0.0"
+    # SQLite3はファイルベースなので、dbサービスは不要
+
+volumes:
+  bundle_cache: # Gemのキャッシュ用ボリューム
+  sqlite_data: # SQLite3のデータ永続化用ボリューム
